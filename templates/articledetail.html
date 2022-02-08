@@ -1,0 +1,65 @@
+{% extends "layout.html" %}
+
+{% block body %}
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Post content-->
+        <article>
+            <!-- Post header-->
+            <header class="mb-4">
+                <!-- Post title-->
+                <h1 class="fw-bolder mb-1">{{article.title}} <span class="badge bg-secondary">by
+                        {{article.author.username}}</span></h1>
+                <!-- Post meta content-->
+                <div class="text-muted fst-italic mb-2">{{article.created_date}}</div>
+
+            </header>
+            <!-- Preview image figure-->
+            {% if article.article_image %}
+            <figure class="mb-4"><img class="img-fluid rounded" src="{{article.article_image.url}}" alt="..." />
+            </figure>
+            {% endif %}
+
+            <!-- Post content-->
+            <section class="mb-5">
+                {{article.content|safe}}
+            </section>
+        </article>
+    </div>
+    <section class="mb-5">
+        <div class="card bg-light">
+            <div class="card-body">
+                <!-- Comment form-->
+                <form class="mb-4" action="{% url 'article:addcomment' article.id %}", method="post">
+                    {% csrf_token %}
+                    <label for="name-input">İsim</label>
+                    <input type="text" class="form-control" id="name-input"
+                        placeholder="İsminizi giriniz..." name="comment_author">
+                    <label for="content-input">Yorum</label>
+                    <textarea class="form-control" id="content-input" rows="3"
+                        placeholder="Yorum bırakınız..." name="comment_content"></textarea>
+                    <button type="submit" style="margin-top: 10px;";" class="btn btn-success">Yorum Ekle</button>
+                </form>
+
+                <!-- Single comment-->
+                {% if comments %}
+                {% for comment in comments %}
+                <div style="margin-bottom: 15px;" class="d-flex">
+                    <div class="flex-shrink-0"><img class="rounded-circle"
+                            src="https://dummyimage.com/50x50/ced4da/6c757d.jpg" alt="..." /></div>
+                    <div class="ms-3">
+                        <div class="fw-bold">{{comment.comment_author}} <span style="margin-left: 25px;" class="badge bg-primary">{{comment.comment_date}}</span></div>
+                        {{comment.comment_content}}
+                    </div>
+                </div>
+                <hr>
+                {% endfor %}
+                {% else %}
+                <div class="alert alert-danger">Bu makaleye hiç yorum yapılmamış. İlk yorum yapan sen ol!</div>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+</div>
+</div>
+{% endblock %}
