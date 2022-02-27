@@ -1,5 +1,5 @@
 from django.shortcuts import get_object_or_404, redirect, render, HttpResponse,reverse
-from .forms import ArticleForm
+from .forms import ArticleForm, CommentForm
 from django.contrib import messages
 from .models import Article,Comment
 from django.contrib.auth.decorators import login_required
@@ -28,8 +28,9 @@ def about(request):
 def article_detail(request,id):
     article = get_object_or_404(Article,id=id)
     comments = article.comments.all()
-
-    return render(request,"articledetail.html",{"article":article,"comments":comments})
+    form = CommentForm()
+    form.full_clean()
+    return render(request,"articledetail.html",{"article":article,"comments":comments,"form":form})
 
 @login_required(login_url="user:login")
 def dashboard(request):
@@ -48,6 +49,8 @@ def add_article(request):
     if form.is_valid():
         article = form.save(commit=False)
         article.author = request.user
+        article.content = article.content.replace("<script>","<pre class='prettyprint'>")
+        article.content = article.content.replace("</script>","</pre>")
         article.save()
         messages.success(request,"Makale Oluşturuldu!")
         return redirect("index")
@@ -55,11 +58,13 @@ def add_article(request):
 
 @login_required(login_url="user:login")
 def update_article(request,id):
-    article = get_object_or_404(Article,id=id)
+    article = get_object_or_404(Article,id=id,author=request.user)
     form = ArticleForm(request.POST or None, request.FILES or None,instance=article)
     if form.is_valid():
         article = form.save(commit=False)
         article.author = request.user
+        article.content = article.content.replace("<script>","<pre class='prettyprint'>")
+        article.content = article.content.replace("</script>","</pre>")
         article.save()
         messages.success(request,"Makale Güncellendi!")
         return redirect("index")
@@ -71,14 +76,15 @@ def update_article(request,id):
 
 @login_required(login_url="user:login")
 def delete_article(request,id):
-    article = get_object_or_404(Article,id=id)
+    article = get_object_or_404(Article,id=id,author=request.user)
     article.delete()
     messages.success(request,"Makale silindi!")
     return redirect("index")    
 
 def add_comment(request,id):
     article = get_object_or_404(Article, id=id)
-    if request.method == "POST":
+    form = CommentForm(request.POST or None)
+    if form.is_valid():
         comment_author = request.POST.get("comment_author")
         comment_content = request.POST.get("comment_content")
 
@@ -86,3 +92,5 @@ def add_comment(request,id):
         new_comment.article = article
         new_comment.save()
         return redirect(reverse("article:articledetail",kwargs={"id":id}))
+    return redirect(reverse("article:articledetail",kwargs={"id":id}))
+    # return redirect(reverse("article:articledetail",kwargs={"id":id}))   
